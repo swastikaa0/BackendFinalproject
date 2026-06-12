@@ -12,10 +12,8 @@ export interface IUser extends UserType ,Document{
 
 const UserMongoSchema:Schema = new Schema <IUser>(
     {
-        firstName: {type:String ,
+        fullName: {type:String ,
             required:true},
-        lastName: { type: String,
-             required: true },
         email: { type: String, 
             required: true, 
             unique: true },
