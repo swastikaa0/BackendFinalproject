@@ -22,13 +22,20 @@ const UserMongoSchema:Schema = new Schema <IUser>(
               unique: true },
         password: { type: String, 
             required: true },
+        
         role: { type: String, 
             enum: ["admin", "user"],
-             default: "user" }
+             default: "user" },
+
+        profileImage:{
+            type:String,
+            required :false}
+            
+        },
 
 
 
-},
+
 {
         timestamps: true 
     }
