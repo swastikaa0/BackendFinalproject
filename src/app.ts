@@ -3,6 +3,7 @@ import userRouter from "./routes/user.route";
 import { HttpException } from "./exception/http-exception";
 import { ApiResponseHelper } from "./utlis/apihelper.util";
 import cors from "cors";
+import path from "path";
 
 const app: Application = express();
 
@@ -11,6 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use(cors());
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 
 app.use("/api/v1/auth", userRouter);
