@@ -11,5 +11,3 @@ app.listen(
         console.log(`Server: http://localhost:${API_PORT}`); // backtick
     }
 );
-// execute: npx tsx --watch index.ts
-// http://localhost:8089 
