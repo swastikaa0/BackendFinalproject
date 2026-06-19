@@ -9,7 +9,13 @@ export const UserSchema = z.object({
 
     password: z.string().min(8, "Password must be at least 8 characters long"),
 
-    role: z.enum(["admin", "user"]).default("user")
+    profileImage: z.string().nullable().optional(),
+
+    role: z.enum(["admin", "user"]).default("user"),
+
+
+
+    
 });
 
 export type UserType = z.infer<typeof UserSchema>;
