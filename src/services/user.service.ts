@@ -1,5 +1,5 @@
 import { UserMongoRepository } from "../repositories/user.repository";
-import { CreateUserDTO, LoginUserDTO ,UpdatePasswordDTO,UpdateProfileDTO} from "../dtos/user.dtos";
+import { CreateUserDTO, LoginUserDTO, UpdateProfileDTO, UpdatePasswordDTO } from "../dtos/user.dtos";
 import { IUser } from "../models/user.models";
 import { HttpException } from "../exception/http-exception";
 import bcryptjs from "bcryptjs";
@@ -11,6 +11,7 @@ const userRepository = new UserMongoRepository();
 export type PublicUser = {
   id: string;
   fullName: string;
+  username: string;
   email: string;
   profileImage?: string | null;
   role: string;
@@ -18,22 +19,21 @@ export type PublicUser = {
   updatedAt?: Date;
 };
 
-
 export class UserService {
     private toPublicUser(user: IUser): PublicUser {
-    return {
-      id: user._id.toString(),
-      fullName: user.fullName,
-      email: user.email,
-      profileImage: user.profileImage || null,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
-  }
-    
-    async createUser(userData: CreateUserDTO): Promise<any> {
+        return {
+            id: user._id.toString(),
+            fullName: user.fullName,
+            username: user.username,
+            email: user.email,
+            profileImage: user.profileImage || null,
+            role: user.role,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        };
+    }
 
+    async createUser(userData: CreateUserDTO): Promise<any> {
         const existingEmail = await userRepository.getUserByEmail(userData.email);
         if (existingEmail) {
             throw new HttpException(400, "Email already exists");
@@ -49,7 +49,6 @@ export class UserService {
 
         const user = await userRepository.createUser(userData);
 
-        
         const userObj = user.toObject();
         delete userObj.password;
 
@@ -57,17 +56,13 @@ export class UserService {
     }
 
     async loginUser(loginData: LoginUserDTO) {
-
         const user = await userRepository.getUserByEmail(loginData.email);
 
         if (!user) {
             throw new HttpException(400, "Invalid email");
         }
 
-        const isPasswordValid = await bcryptjs.compare(
-            loginData.password,
-            user.password
-        );
+        const isPasswordValid = await bcryptjs.compare(loginData.password, user.password);
 
         if (!isPasswordValid) {
             throw new HttpException(400, "Invalid password");
@@ -79,64 +74,67 @@ export class UserService {
             { expiresIn: "30d" }
         );
 
-        
         const userObj = user.toObject();
         delete userObj.password;
 
-        return {
-            user: userObj,
-            token
-        };
+        return { user: userObj, token };
     }
 
     async getCurrentUser(userId: string): Promise<PublicUser> {
-    const user = await userRepository.getUserById(userId);
+        const user = await userRepository.getUserById(userId);
 
-    if (!user) {
-      throw new HttpException(404, "User not found");
+        if (!user) {
+            throw new HttpException(404, "User not found");
+        }
+
+        return this.toPublicUser(user);
     }
 
-    return this.toPublicUser(user);
-  }
+    async updateProfile(userId: string, profileData: UpdateProfileDTO): Promise<PublicUser> {
+        const updatePayload: any = { ...profileData }; // ✅ fixed — was commented out causing crash
 
-    async updateProfile(
-    userId: string,
-    profileData: UpdateProfileDTO,
-  ): Promise<PublicUser> {
-    const updatedUser = await userRepository.update(userId, profileData);
+        if (updatePayload.username) {
+            const existingUser = await userRepository.getUserByUsername(updatePayload.username);
+            if (existingUser && existingUser._id.toString() !== userId) {
+                throw new HttpException(400, "Username already taken");
+            }
+        }
 
-    if (!updatedUser) {
-      throw new HttpException(404, "User not found");
+        const updatedUser = await userRepository.update(userId, updatePayload);
+
+        if (!updatedUser) {
+            throw new HttpException(404, "User not found");
+        }
+
+        return this.toPublicUser(updatedUser);
     }
 
-    return this.toPublicUser(updatedUser);
-  }
+    // ✅ moved inside the class
+    async updatePassword(userId: string, passwordData: UpdatePasswordDTO) {
+        const user = await userRepository.getUserById(userId);
 
-  async updatePassword(userId: string, passwordData: UpdatePasswordDTO) {
-    const user = await userRepository.getUserById(userId);
+        if (!user) {
+            throw new HttpException(404, "User not found");
+        }
 
-    if (!user) {
-      throw new HttpException(404, "User not found");
+        const isPasswordValid = await bcryptjs.compare(
+            passwordData.currentPassword,
+            user.password
+        );
+
+        if (!isPasswordValid) {
+            throw new HttpException(400, "Current password is incorrect");
+        }
+
+        const hashedPassword = await bcryptjs.hash(passwordData.newPassword, 10);
+        const updatedUser = await userRepository.update(userId, {
+            password: hashedPassword,
+        });
+
+        if (!updatedUser) {
+            throw new HttpException(404, "User not found");
+        }
+
+        return this.toPublicUser(updatedUser);
     }
-
-    const isPasswordValid = await bcryptjs.compare(
-      passwordData.currentPassword,
-      user.password,
-    );
-
-    if (!isPasswordValid) {
-      throw new HttpException(400, "Current password is incorrect");
-    }
-
-    const hashedPassword = await bcryptjs.hash(passwordData.newPassword, 10);
-    const updatedUser = await userRepository.update(userId, {
-      password: hashedPassword,
-    });
-
-    if (!updatedUser) {
-      throw new HttpException(404, "User not found");
-    }
-
-    return this.toPublicUser(updatedUser);
-  }
-}
+} 
