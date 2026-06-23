@@ -21,19 +21,40 @@ export type LoginUserDTO = z.infer<typeof LoginUserDTO>;
 // DTO for profile update
 export const UpdateProfileDTO = z.object({
   fullName: z.string().min(1, "Full name is required").optional(),
+  username: z.string().min(3, "Username must be at least 3 characters").optional(),
   phoneNumber: z
     .string()
     .min(10, "Phone number must be at least 10 digits long")
     .optional(),
   profileImage: z.string().nullable().optional(),
+
+//   //added part 
+//    currentPassword: z.string().optional(),
+//    newPassword: z.string().min(6, "New password must be at least 6 characters").optional(),
+//  }).refine(
+//   (data) => {
+//     if (data.newPassword && !data.currentPassword) return false;
+//     return true;
+//   },
+//   {
+//     message: "Current password is required to set a new password",
+//     path: ["currentPassword"],
 });
 
 export type UpdateProfileDTO = z.infer<typeof UpdateProfileDTO>;
 
-// DTO for password update
+// // DTO for password update
 export const UpdatePasswordDTO = z.object({
-  currentPassword: z.string().min(6, "Password must be at least 6 characters"),
-  newPassword: z.string().min(6, "New password must be at least 6 characters"),
+ currentPassword: z.string().optional(),
+  newPassword: z.string().min(6, "New password must be at least 6 characters").optional(),
+}).refine(
+  (data) => {
+    if (data.newPassword && !data.currentPassword) return false;
+    return true;
+  },
+  {
+    message: "Current password is required to set a new password",
+    path: ["currentPassword"],
 });
 
 export type UpdatePasswordDTO = z.infer<typeof UpdatePasswordDTO>;
