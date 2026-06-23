@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 
 import { UserService } from "../services/user.service";
-import { CreateUserDTO, LoginUserDTO, UpdatePasswordDTO,UpdateProfileDTO } from "../dtos/user.dtos";
+import { CreateUserDTO, LoginUserDTO,UpdateProfileDTO, UpdatePasswordDTO} from "../dtos/user.dtos";
 import { ApiResponseHelper } from "../utlis/apihelper.util";
 import { AuthRequest } from "../middlewares/authorized.middleware";
 
@@ -102,6 +102,10 @@ export class UserController {
       if (!req.user?.id) {
         return ApiResponseHelper.error(res, "Unauthorized", 401);
       }
+      console.log("DEBUG req.file:", req.file);
+      console.log("DEBUG req.body:", req.body);
+
+      
 
       const profileImage = req.file
         ? `/uploads/profile/${req.file.filename}`
@@ -135,7 +139,8 @@ export class UserController {
     }
   }
 
- updatePassword =async(req: AuthRequest, res: Response)=> {
+
+ updatePassword = async (req: AuthRequest, res: Response) => {
     try {
       if (!req.user?.id) {
         return ApiResponseHelper.error(res, "Unauthorized", 401);
@@ -144,20 +149,12 @@ export class UserController {
       const passwordData = UpdatePasswordDTO.safeParse(req.body);
 
       if (!passwordData.success) {
-        return ApiResponseHelper.error(
-          res,
-          z.prettifyError(passwordData.error),
-          400,
-        );
+        return ApiResponseHelper.error(res, z.prettifyError(passwordData.error), 400);
       }
 
       const user = await this.userService.updatePassword(req.user.id, passwordData.data);
 
-      return ApiResponseHelper.success(
-        res,
-        user,
-        "Password updated successfully",
-      );
+      return ApiResponseHelper.success(res, user, "Password updated successfully");
     } catch (error: Error | any | unknown) {
       return ApiResponseHelper.error(
         res,
@@ -166,4 +163,7 @@ export class UserController {
       );
     }
   }
+
 }
+
+
