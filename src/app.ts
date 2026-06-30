@@ -5,6 +5,9 @@ import { ApiResponseHelper } from "./utlis/apihelper.util";
 import cors from "cors";
 import path from "path";
 
+import userRoutes from "./routes/user.route";
+import adminUserRoutes from "./routes/admin/user.route";
+
 const app: Application = express();
 
 app.use(express.json()); // json input
@@ -16,6 +19,8 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 
 app.use("/api/v1/auth", userRouter);
+
+app.use("/api/v1/admin/users", adminUserRoutes); // admin user related routes
 
 
 app.get("/", (req: Request, res: Response) => {

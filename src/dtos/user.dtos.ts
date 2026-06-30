@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { UserSchema } from "../types/user.types";
 
-// Create a DTO for creating a user
-// export const CreateUserDTO = UserSchema.omit({ role: true });
+
 export const CreateUserDTO = UserSchema.pick({
     fullName: true,
     // lastName: true,
@@ -11,6 +10,15 @@ export const CreateUserDTO = UserSchema.pick({
     password: true
 });
 export type CreateUserDTO = z.infer<typeof CreateUserDTO>;
+
+export const CreateUserDTOAdmin = UserSchema.pick({
+    fullName:true,
+    email: true,
+    username: true,
+    password: true,
+    role: true
+});
+export type CreateUserDTOAdmin = z.infer<typeof CreateUserDTOAdmin>;
 
 export const LoginUserDTO = UserSchema.pick({
     email: true,
@@ -26,19 +34,18 @@ export const UpdateProfileDTO = z.object({
     .string()
     .min(10, "Phone number must be at least 10 digits long")
     .optional(),
+
+     email: z
+    .string()
+    .email("Invalid email address")
+    .optional(),
+    
+     role: z
+    .enum(["user", "admin"])
+    .optional(),
   profileImage: z.string().nullable().optional(),
 
-//   //added part 
-//    currentPassword: z.string().optional(),
-//    newPassword: z.string().min(6, "New password must be at least 6 characters").optional(),
-//  }).refine(
-//   (data) => {
-//     if (data.newPassword && !data.currentPassword) return false;
-//     return true;
-//   },
-//   {
-//     message: "Current password is required to set a new password",
-//     path: ["currentPassword"],
+
 });
 
 export type UpdateProfileDTO = z.infer<typeof UpdateProfileDTO>;
