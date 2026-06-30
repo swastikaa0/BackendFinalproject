@@ -91,7 +91,7 @@ export class UserService {
     }
 
     async updateProfile(userId: string, profileData: UpdateProfileDTO): Promise<PublicUser> {
-        const updatePayload: any = { ...profileData }; // ✅ fixed — was commented out causing crash
+        const updatePayload: any = { ...profileData }; 
 
         if (updatePayload.username) {
             const existingUser = await userRepository.getUserByUsername(updatePayload.username);
@@ -109,7 +109,7 @@ export class UserService {
         return this.toPublicUser(updatedUser);
     }
 
-    // ✅ moved inside the class
+    
     async updatePassword(userId: string, passwordData: UpdatePasswordDTO) {
         const user = await userRepository.getUserById(userId);
 
@@ -136,5 +136,41 @@ export class UserService {
         }
 
         return this.toPublicUser(updatedUser);
+    }
+    async deleteUser(id: string): Promise<boolean> {
+        const existingUser = await userRepository.getUserById(id);
+        if (!existingUser) {
+            throw new HttpException(404, "User not found");
+        }
+        const deleted = await userRepository.delete(id);
+        if (!deleted) {
+            throw new HttpException(500, "Failed to delete user");
+        }
+        return deleted;
+    }
+
+
+    async getUserById(id: string): Promise<IUser | null> {
+        const user = await userRepository.getUserById(id);
+        if (!user) {
+            throw new HttpException(404, "User not found");
+        }
+        return user;
+    }
+
+    async getAllUserPaginated(page?: string, limit?: string, search?: string) {
+        const currentPage = page && parseInt(page) > 0 ? parseInt(page) : 1;
+        const currentLimit = limit && parseInt(limit) > 0 ? parseInt(limit) : 10;
+        const currentSearch = search && search.trim() !== "" ? search : undefined;
+
+        const { data, total } = await userRepository.getAllPaginated(currentPage, currentLimit, currentSearch);
+        const totalPages = Math.ceil(total / currentLimit);
+        const pagination = {
+            page: currentPage,
+            limit: currentLimit,
+            totalPages: totalPages,
+            total: total,
+        }
+        return { data, pagination };
     }
 } 
