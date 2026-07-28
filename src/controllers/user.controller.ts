@@ -4,7 +4,8 @@ import { Request, Response } from "express";
 import { z } from "zod";
 
 import { UserService } from "../services/user.service";
-import { CreateUserDTO, LoginUserDTO,UpdateProfileDTO, UpdatePasswordDTO} from "../dtos/user.dtos";
+import { CreateUserDTO, LoginUserDTO,UpdateProfileDTO, UpdatePasswordDTO,  ForgotPasswordDTO,
+  ResetPasswordDTO,} from "../dtos/user.dtos";
 import { ApiResponseHelper } from "../utlis/apihelper.util";
 import { AuthRequest } from "../middlewares/authorized.middleware";
 
@@ -163,6 +164,59 @@ export class UserController {
       );
     }
   }
+
+  forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const validation = ForgotPasswordDTO.safeParse(req.body);
+
+    if (!validation.success) {
+      return ApiResponseHelper.error(
+        res,
+        z.prettifyError(validation.error),
+        400
+      );
+    }
+
+    await this.userService.forgotPassword(validation.data.email);
+
+    return ApiResponseHelper.success(
+      res,
+      null,
+      "Password reset link has been sent to your email."
+    );
+  } catch (error) {
+    return this.sendError(res, error);
+  }
+};
+
+resetPassword = async (req: Request, res: Response) => {
+  try {
+    const validation = ResetPasswordDTO.safeParse(req.body);
+
+    if (!validation.success) {
+      return ApiResponseHelper.error(
+        res,
+        z.prettifyError(validation.error),
+        400
+      );
+    }
+
+    const { token, password } = validation.data;
+
+    const result = await this.userService.resetPassword(
+      token,
+      password
+    );
+
+    return ApiResponseHelper.success(
+      res,
+      result,
+      "Password has been reset successfully."
+    );
+  } catch (error) {
+    return this.sendError(res, error);
+  }
+};
 
 }
 
