@@ -33,6 +33,16 @@ userRouter.patch(
   authenticateUser,
   userController.updatePassword,
 );
+// Forgot Password
+userRouter.post(
+  "/forgot-password",
+  userController.forgotPassword
+);
+
+userRouter.post(
+  "/reset-password",
+  userController.resetPassword
+);
 
 
 

@@ -65,3 +65,21 @@ export const UpdatePasswordDTO = z.object({
 });
 
 export type UpdatePasswordDTO = z.infer<typeof UpdatePasswordDTO>;
+
+export const ForgotPasswordDTO = z.object({
+  email: z.string().email("Invalid email"),
+});
+
+export const ResetPasswordDTO = z
+  .object({
+    token: z.string().min(1, "Token is required"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string().min(8),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type ForgotPasswordDTOType = z.infer<typeof ForgotPasswordDTO>;
+export type ResetPasswordDTOType = z.infer<typeof ResetPasswordDTO>;

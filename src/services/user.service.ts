@@ -4,8 +4,9 @@ import { IUser } from "../models/user.models";
 import { HttpException } from "../exception/http-exception";
 import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { SECRET_KEY } from "../configs/constant";
 
+import { CLIENT_URL, SECRET_KEY } from "../configs/constant";
+import { sendEmail } from "../configs/email";
 const userRepository = new UserMongoRepository();
 
 export type PublicUser = {
@@ -173,4 +174,83 @@ export class UserService {
         }
         return { data, pagination };
     }
+
+    async forgotPassword(email: string) {
+    if (!email) {
+        throw new HttpException(400, "Email is required");
+    }
+
+    const user = await userRepository.getUserByEmail(email);
+
+    if (!user) {
+        throw new HttpException(404, "User not found");
+    }
+
+    const token = jwt.sign(
+        { id: user._id },
+        SECRET_KEY,
+        { expiresIn: "1h" }
+    );
+
+    const resetLink = `${CLIENT_URL}/reset-password?token=${token}`;
+
+    const html = `
+        <h2>Password Reset</h2>
+        <p>Click the link below to reset your password.</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>This link will expire in 1 hour.</p>
+    `;
+
+    await sendEmail(
+        user.email,
+        "Password Reset",
+        html
+    );
+
+    return {
+        message: "Password reset email sent successfully",
+    };
+}
+
+async resetPassword(token: string, newPassword: string) {
+    try {
+
+        if (!token || !newPassword) {
+            throw new HttpException(
+                400,
+                "Token and new password are required"
+            );
+        }
+
+        const decoded: any = jwt.verify(
+            token,
+            SECRET_KEY
+        );
+
+        const user = await userRepository.getUserById(decoded.id);
+
+        if (!user) {
+            throw new HttpException(404, "User not found");
+        }
+
+        const hashedPassword = await bcryptjs.hash(
+            newPassword,
+            10
+        );
+
+        await userRepository.update(user._id.toString(), {
+            password: hashedPassword,
+        });
+
+        return {
+            message: "Password reset successfully",
+        };
+
+    } catch (error) {
+        throw new HttpException(
+            400,
+            "Invalid or expired token"
+        );
+    }
+}
 } 
