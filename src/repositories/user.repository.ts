@@ -8,6 +8,7 @@ export interface IUserRepository {
     createUser(user: Partial<IUser>): Promise<IUser>;
     getUserById(id: string): Promise<IUser | null>;
     getAll(): Promise<IUser[]>;
+    getAdmins(): Promise<IUser[]>;
     getAllPaginated(page: number, limit: number, search?: string): Promise<{ data: IUser[]; total: number }>;
     update(id:string,user:Partial<IUser>):Promise<IUser | null>;
     delete(id: string):Promise<boolean>;
@@ -56,4 +57,12 @@ export class UserMongoRepository implements IUserRepository {
             .limit(limit);
         return { data, total };
     }
+    async getAdmins(){
+
+    return await UserModel.find({
+        role:"admin"
+    });
+
+}
+
 }
