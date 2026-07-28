@@ -47,6 +47,12 @@ export const authenticateUser = async (
   res: Response,
   next: NextFunction,
 ) => {
+
+ console.log("Authorization:", req.headers.authorization);
+console.log("Cookie:", req.headers.cookie); 
+console.log("AUTH MIDDLEWARE HIT");
+console.log("COOKIE:", req.headers.cookie);
+
   try {
     const token = getTokenFromRequest(req);
 
